@@ -12,7 +12,8 @@ a0 = -1.01;
 a1 = 2.847;
 a2 = 0.075;
 
-P = linspace(0, 0.9, 10);
+P = linspace(0.001, 0.9, 10);
+P = [0, P];
 Hs = wblinv(P,alpha,beta) + gamma;
 % figure
 % plot(P,Hs);

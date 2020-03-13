@@ -28,8 +28,8 @@ L = [205, 245, 285, 330, 415];
 factor = [1,2];
 dirs = [15,45,75];%0:45:180; linspace(0,90,4);
 
-mothership.length = 330;
-mothership.factor = 2;
+mothership.length = 245;
+mothership.factor = 1;
 mothership.MAX_ALLOW_HEAVE = 0.4;
 mothership.MAX_ALLOW_ROLL = 1.5;
-[dir, exceeding_prob]= ship_calculation(mothership);
+% [dir, exceeding_prob, limit_type]= ship_calculation(mothership);

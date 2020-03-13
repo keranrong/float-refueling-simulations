@@ -7,7 +7,6 @@ function [max_fuel_saved, x_pos, Weights, take_off_distance] = aircraft_calculat
 g = 32.174; % gravity
 flag_catapult = 1; % On/Off Catapult
 
-
 %% Initial sizing of aircraft
 %{
 wing_span = 132; % wing-span[ft] of refueling aircraft
