@@ -1,3 +1,6 @@
+addpath('.\ship_model');
+addpath('.\ship_datebase');
+
 %% overwrite based aircraft structure;
 refueling_aircraft = struct();
 refueling_aircraft.wing_span = 132; % wing-span [ft] of refueling aircraft
@@ -19,3 +22,14 @@ target_airplane.empty_weight = 198440; % empty weight [lb]
 target_airplane.max_payload = 96560; % max payload [lb]
 
 [max_fuel_saved, x_pos, Weights, take_off_distance] = aircraft_calculation(refueling_aircraft,target_airplane);
+
+%% Mothership availability criteria
+L = [205, 245, 285, 330, 415];
+factor = [1,2];
+dirs = [15,45,75];%0:45:180; linspace(0,90,4);
+
+mothership.length = 330;
+mothership.factor = 2;
+mothership.MAX_ALLOW_HEAVE = 0.4;
+mothership.MAX_ALLOW_ROLL = 1.5;
+[dir, exceeding_prob]= ship_calculation(mothership);
