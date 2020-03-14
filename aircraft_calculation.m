@@ -2,11 +2,15 @@
 %% This file is used to calculate the refueling aircraft' performance and logisitics
 % Created by KRg/Gautam 30/05/2020,
 % modified to a function verison of the implementation
-function [max_fuel_saved, x_pos, Weights, take_off_distance] = aircraft_calculation(refueling_aircraft,target_airplane, logistics)
+function [max_fuel_saved, x_pos, Weights, take_off_distance] = aircraft_calculation(refueling_aircraft,target_airplane, logistics, flag_catapult)
 %% Constant
 g = 32.174; % gravity
-flag_catapult = 1; % On/Off Catapult
-
+% flag_catapult = 1; % On/Off Catapult
+%% Initial Output
+max_fuel_saved = -1;
+x_pos = -1;
+Weights = zeros(1,10);
+take_off_distance = -1;
 %% Initial sizing of aircraft
 %{
 wing_span = 132; % wing-span[ft] of refueling aircraft
@@ -42,8 +46,8 @@ cruise_altitude = target_airplane.cruise_altitude; % 35000; % ft cruise altitude
 SFC_target = target_airplane.SFC_target; % 0.6; % Specific fuel consumption ratio
 Range_target = target_airplane.Range_target * 3280.84; % Range of flights [m-ft]
 LD_ratio_target = target_airplane.LD_ratio_target; % Rodrigo Martínez-Val; et al. (January 2005). "Historical evolution of air transport productivity and efficiency". 43rd AIAA Aerospace Sciences Meeting and Exhibit. doi:10.2514/6.2005-121
-empty_weight = target_airplane.empty_weight; % empty weight [lb]
-max_payload = target_airplane.max_payload; % max payload [lb]
+empty_weight_target = target_airplane.empty_weight; % empty weight [lb]
+max_payload_target = target_airplane.max_payload; % max payload [lb]
 
 
 %% Initialization
@@ -86,7 +90,7 @@ else
     stroke_limit = 310;
     % C-7,  weaker and older verison
     thr_catapult = 0.5 * 40000 * 148 ^ 2 / 253 / g; % kinetic energy / stroke unit:lb
-    stroke_limit = 253;    
+    stroke_limit = 253;
 end
 
 %initial velocity and time
@@ -111,7 +115,9 @@ end
 
 take_off_distance = x;
 W1= W; % the weight after take-off
-
+if W1 <= W_empty
+   return 
+end
 %% segment 2: Aircraft Climb section
 % Mach number is calculated iteratively to match the speed
 Mach = 0.8; % inital mach number
@@ -123,8 +129,12 @@ t = 0;
 Thr0 = Thr;
 [rho0, ~]=air_physics(0);
 
-while (h <cruise_altitude)
-    [rrho, airspeed]=air_physics(h);
+while (h < cruise_altitude && W > 0)
+    try
+        [rrho, airspeed]=air_physics(h);
+    catch
+        keyboard
+    end
     Thrr = Thr0 / rho0 * rrho;
     count = 1;
     while(abs(Mach-Mach_n_1)>= 0.1 && count<10)
@@ -146,7 +156,9 @@ while (h <cruise_altitude)
 end
 
 W2 = W;
-
+if W2 <= W_empty
+   return 
+end
 %% Section 3: approaching
 Mach = target_cruise_mach;
 [Cd0, S, a, alpha0, ClMax, K, Kdelta, H]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
@@ -155,8 +167,12 @@ Mach = target_cruise_mach;
 u = Mach * airspeed; % mach to velocity ft/sec
 max_LD = 1/(2*sqrt(Cd0*K)); % Nocolai page 76
 % service_range_approach = service_range;
-service_range_approach = service_range + logistics.number_refueling * logistics.distance_refueling;
+service_range_approach = service_range + (logistics.number_refueling - 1) * logistics.distance_refueling;
 W3 = W2 * exp(-SFC/3600 * service_range_approach/(u*max_LD)); % Breguet Range equations Nicolai p 78
+
+if W3 <= W_empty
+   return 
+end
 
 %% Segment 4: refueling
 %A single flying boom can transfer fuel at approximately 6,000 lbs per
@@ -169,17 +185,21 @@ W3 = W2 * exp(-SFC/3600 * service_range_approach/(u*max_LD)); % Breguet Range eq
 d_SFC = 6000*60;
 % equalvalent SFC is much bigger than the Engine SFC... We can treated the
 % refueling is instant and thus ignore the time.
-%% 
+%%
 %% Segment 5 & 6: landing -> return
 W7= W_empty; % Weight after landed.
 W6 = W7 / 0.995; % Wetght before landed based on Hisotical data see Raymer page 21.
 W5 = W6/exp(-SFC/3600 * service_range/(u*max_LD)); % Breguet Range equations Nicolai p 78
 
 if W3 < W5
-    disp('impossible, please change your serivce range');
-else
-    capacity = W3-W5;
-    fuel_comsumed = W_full-W_empty-(W3-W5);
+   %disp('impossible, please change your serivce range');
+   return
+end
+capacity = max(W3-W5,0.01);
+fuel_consumed = W_full-W_empty-(W3-W5);
+if W3 < W5
+   %disp('impossible, please change your serivce range');
+   return
 end
 
 %% Segment 7( show the optimzed position ): Logistics: fuel saved for target airplane
@@ -233,12 +253,12 @@ x_pos = x(t2)/3280.84;
 % saved) However, this part of code allows mutlitple refueling for same
 % target airplane and the mutlituple refueling for same refueling airplane.
 % logistics = struct();
-% logistics.number_refueling = 2; % number of refueling for same refueling airplane 
-% logistics.number_target = 2; % number of refueling  for same target airplane 
+% logistics.number_refueling = 2; % number of refueling for same refueling airplane
+% logistics.number_target = 2; % number of refueling  for same target airplane
 
 dW = capacity / logistics.number_refueling; % amount of refuel to be refuel in one time
 
-Wtarget_0 = empty_weight + max_payload;
+Wtarget_0 = empty_weight_target + max_payload_target;
 Wr = Wtarget_0; % MTOW + Maxpayload;
 Wr = Wr/0.995; % Landing see Raymer page 21
 rr = 3600 * u * LD_ratio_target / SFC_target * log((dW+Wr)/Wr);
@@ -256,12 +276,12 @@ Wn = Wn / 0.970; % take-off weight see Raymer page 21;
 
 
 
-total_fuel_saved = (Wn - Wr) / logistics.number_target * logistics.number_refueling - capacity - fuel_comsumed; % total fuel saved in lb
+total_fuel_saved = (Wn - Wr) / logistics.number_target * logistics.number_refueling - capacity - fuel_consumed; % total fuel saved in lb
 
-max_fuel_saved = total_fuel_saved; 
+max_fuel_saved = total_fuel_saved;
 
 
 x_pos = (Range_target - rr.*cumsum(ones(logistics.number_target,1))) / 3280.84;
-Weights = [W0,W1,W2,W3,W3-dW,W5,W6,W7,dW,fuel_comsumed];
+Weights = [W0,W1,W2,W3,W3-dW,W5,W6,W7,capacity,fuel_consumed];
 
 end

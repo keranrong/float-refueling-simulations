@@ -23,24 +23,25 @@ target_airplane.max_payload = 96560; % max payload [lb]
 
 %% Logistics strategy
 logistics = struct();
-logistics.number_refueling = 2; % number of refueling for same refueling airplane 
-logistics.number_target = 2; % number of refueling  for same target airplane 
-logistics.distance_refueling = 26400*2; %[km] the distance between two refueling for same refeuling airplane, 5 miles as the minimum safety distance
+logistics.number_refueling = 1; % number of refueling for same refueling airplane 
+logistics.number_target = 1; % number of refueling  for same target airplane 
+logistics.distance_refueling = 26400*0; %[km] the distance between two refueling for same refeuling airplane, 5 miles as the minimum safety distance
 % According to FAA regulations
+flag_catapult = 1;
 
-
-[max_fuel_saved, x_pos, Weights, take_off_distance] = aircraft_calculation(refueling_aircraft,target_airplane,logistics);
+[max_fuel_saved, x_pos, Weights, take_off_distance] = aircraft_calculation(refueling_aircraft, target_airplane, logistics, flag_catapult);
 
 
 %% logistics strategy parameters
 %% Mothership availability criteria
-L = [205, 245, 285, 330, 415];
-factor = [1,2];
-
-mothership.length = 245;
-mothership.factor = 1;
-mothership.MAX_ALLOW_HEAVE = 0.4;
-mothership.MAX_ALLOW_ROLL = 1.5;
 if 0
+    L = [205, 245, 285, 330, 415];
+    factor = [1,2];
+    
+    mothership.length = 245;
+    mothership.factor = 1;
+    mothership.MAX_ALLOW_HEAVE = 0.4;
+    mothership.MAX_ALLOW_ROLL = 1.5;
+    
     [dir, exceeding_prob, limit_type]= ship_calculation(mothership);
 end
