@@ -4,7 +4,7 @@ addpath('.\ship_datebase');
 %% overwrite based aircraft structure;
 refueling_aircraft = struct();
 refueling_aircraft.wing_span = 132; % wing-span [ft] of refueling aircraft
-refueling_aircraft.weight_takeoff = 150000; % take-off weight of refueling aircraft [lb]
+refueling_aircraft.weight_takeoff = 50000; % take-off weight of refueling aircraft [lb]
 refueling_aircraft.AR = 10.3; % aspect ratio of refueling aircraft
 refueling_aircraft.sweep_angle = 25;  % Sweep angle [deg]
 refueling_aircraft.thrust_weight_ratio = 0.253; % Thrust to weight ratio[-]
@@ -21,15 +21,26 @@ target_airplane.LD_ratio_target = 	16.1; % Rodrigo Martínez-Val; et al. (January
 target_airplane.empty_weight = 198440; % empty weight [lb]
 target_airplane.max_payload = 96560; % max payload [lb]
 
-[max_fuel_saved, x_pos, Weights, take_off_distance] = aircraft_calculation(refueling_aircraft,target_airplane);
+%% Logistics strategy
+logistics = struct();
+logistics.number_refueling = 2; % number of refueling for same refueling airplane 
+logistics.number_target = 2; % number of refueling  for same target airplane 
+logistics.distance_refueling = 26400*2; %[km] the distance between two refueling for same refeuling airplane, 5 miles as the minimum safety distance
+% According to FAA regulations
 
+
+[max_fuel_saved, x_pos, Weights, take_off_distance] = aircraft_calculation(refueling_aircraft,target_airplane,logistics);
+
+
+%% logistics strategy parameters
 %% Mothership availability criteria
 L = [205, 245, 285, 330, 415];
 factor = [1,2];
-dirs = [15,45,75];%0:45:180; linspace(0,90,4);
 
 mothership.length = 245;
 mothership.factor = 1;
 mothership.MAX_ALLOW_HEAVE = 0.4;
 mothership.MAX_ALLOW_ROLL = 1.5;
-% [dir, exceeding_prob, limit_type]= ship_calculation(mothership);
+if 0
+    [dir, exceeding_prob, limit_type]= ship_calculation(mothership);
+end

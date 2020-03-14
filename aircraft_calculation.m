@@ -2,7 +2,7 @@
 %% This file is used to calculate the refueling aircraft' performance and logisitics
 % Created by KRg/Gautam 30/05/2020,
 % modified to a function verison of the implementation
-function [max_fuel_saved, x_pos, Weights, take_off_distance] = aircraft_calculation(refueling_aircraft,target_airplane)
+function [max_fuel_saved, x_pos, Weights, take_off_distance] = aircraft_calculation(refueling_aircraft,target_airplane, logistics)
 %% Constant
 g = 32.174; % gravity
 flag_catapult = 1; % On/Off Catapult
@@ -154,8 +154,9 @@ Mach = target_cruise_mach;
 [rho, airspeed]=air_physics(cruise_altitude);
 u = Mach * airspeed; % mach to velocity ft/sec
 max_LD = 1/(2*sqrt(Cd0*K)); % Nocolai page 76
-
-W3 = W2 * exp(-SFC/3600 * service_range/(u*max_LD)); % Breguet Range equations Nicolai p 78
+% service_range_approach = service_range;
+service_range_approach = service_range + logistics.number_refueling * logistics.distance_refueling;
+W3 = W2 * exp(-SFC/3600 * service_range_approach/(u*max_LD)); % Breguet Range equations Nicolai p 78
 
 %% Segment 4: refueling
 %A single flying boom can transfer fuel at approximately 6,000 lbs per
@@ -168,6 +169,7 @@ W3 = W2 * exp(-SFC/3600 * service_range/(u*max_LD)); % Breguet Range equations N
 d_SFC = 6000*60;
 % equalvalent SFC is much bigger than the Engine SFC... We can treated the
 % refueling is instant and thus ignore the time.
+%% 
 %% Segment 5 & 6: landing -> return
 W7= W_empty; % Weight after landed.
 W6 = W7 / 0.995; % Wetght before landed based on Hisotical data see Raymer page 21.
@@ -179,14 +181,14 @@ else
     capacity = W3-W5;
     fuel_comsumed = W_full-W_empty-(W3-W5);
 end
-dW = capacity;
 
-%% Segment 7: Logistics: fuel saved for target airplane
+%% Segment 7( show the optimzed position ): Logistics: fuel saved for target airplane
 % In this section, we will calculate how much fuels we saved for
 % severviability of refueling mission
 % We use back-track method to do the calculation e.g. from landing to
 % take-off
-
+%{
+dW = capacity;
 Mach0 = target_cruise_mach;
 [rho, airspeed]=air_physics(cruise_altitude);
 u = Mach0 * airspeed; % cruise speed mach to velocity ft/sec
@@ -208,9 +210,8 @@ Wn = Wn/0.995; % Landing see Raymer page 21
 Wn = Wn./exp(-(Range_target)*SFC_target/3600/u/LD_ratio_target);
 Wn = Wn / 0.985;% historial date for climb see Raymer page 21;
 Wn = Wn / 0.970; % take-off weight see Raymer page 21;
-
-
 total_fuel_saved = Wn - Wr - dW - fuel_comsumed; % total fuel saved in lb
+
 %{
 figure;
 plot(x, total_fuel_saved,'--');
@@ -222,4 +223,45 @@ grid on
 [max_fuel_saved,t2] = max(total_fuel_saved);
 Weights = [W0,W1,W2,W3,W3-dW,W5,W6,W7,dW,fuel_comsumed];
 x_pos = x(t2)/3280.84;
+
+%}
+
+%% Segment 7(already based on the optimzed position): Logistics: fuel saved for target airplane
+% In this section, we calculated it based on the knowledge we have already
+% know: All the fuel refueled will be used in the most last part of target airplane's
+% jounery( The segment 7 got commemted shows the position versus fuel
+% saved) However, this part of code allows mutlitple refueling for same
+% target airplane and the mutlituple refueling for same refueling airplane.
+% logistics = struct();
+% logistics.number_refueling = 2; % number of refueling for same refueling airplane 
+% logistics.number_target = 2; % number of refueling  for same target airplane 
+
+dW = capacity / logistics.number_refueling; % amount of refuel to be refuel in one time
+
+Wtarget_0 = empty_weight + max_payload;
+Wr = Wtarget_0; % MTOW + Maxpayload;
+Wr = Wr/0.995; % Landing see Raymer page 21
+rr = 3600 * u * LD_ratio_target / SFC_target * log((dW+Wr)/Wr);
+
+Wr = Wr ./ exp(-(Range_target - rr * logistics.number_target) * SFC_target / 3600 / u / LD_ratio_target);
+Wr = Wr / 0.985;% historial date for climb see Raymer page 21;
+Wr = Wr / 0.970; % take-off weight see Raymer page 21;
+
+% Wn: weight without refueled backtrack to take-off weight
+Wn = Wtarget_0; % MTOW + Maxpayload;
+Wn = Wn/0.995; % Landing see Raymer page 21
+Wn = Wn ./ exp(- (Range_target) * SFC_target / 3600 / u / LD_ratio_target);
+Wn = Wn / 0.985;% historial date for climb see Raymer page 21;
+Wn = Wn / 0.970; % take-off weight see Raymer page 21;
+
+
+
+total_fuel_saved = (Wn - Wr) / logistics.number_target * logistics.number_refueling - capacity - fuel_comsumed; % total fuel saved in lb
+
+max_fuel_saved = total_fuel_saved; 
+
+
+x_pos = (Range_target - rr.*cumsum(ones(logistics.number_target,1))) / 3280.84;
+Weights = [W0,W1,W2,W3,W3-dW,W5,W6,W7,dW,fuel_comsumed];
+
 end
