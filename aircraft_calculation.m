@@ -44,7 +44,7 @@ max_payload = 96560; % max payload [lb]
 target_cruise_mach = target_airplane.target_cruise_mach; % 533 mph
 cruise_altitude = target_airplane.cruise_altitude; % 35000; % ft cruise altitude for operations
 SFC_target = target_airplane.SFC_target; % 0.6; % Specific fuel consumption ratio
-Range_target = target_airplane.Range_target * 3280.84; % Range of flights [m-ft]
+Range_target = target_airplane.Range_target * 3280.84; % Range of flights [km-ft]
 LD_ratio_target = target_airplane.LD_ratio_target; % Rodrigo Martínez-Val; et al. (January 2005). "Historical evolution of air transport productivity and efficiency". 43rd AIAA Aerospace Sciences Meeting and Exhibit. doi:10.2514/6.2005-121
 empty_weight_target = target_airplane.empty_weight; % empty weight [lb]
 max_payload_target = target_airplane.max_payload; % max payload [lb]
@@ -58,16 +58,16 @@ max_payload_target = target_airplane.max_payload; % max payload [lb]
 % [~, ~, a, alpha0, ClMax, K, Kdelta, H]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
 [tda, SFC_SL, SFC]=engine_spec(); % engine specification data
 %control thrust to weight ratio
-Thr = thrust_weight_ratio *W_full;
+Thr = thrust_weight_ratio * W_full;
 W0= W_full; % take - off weight
 
 %% segment 1: Aircraft take-off condition
 %%% initialization %%%
 Mach = 0.2; % for take-off/landing Mach is set to be 0.2
-[Cd0, S, ~, ~, ClMax, K, Kdelta, H]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
+[Cd0, S, ~, ~, ClMax, K, Clgrd, H]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
 
-u=.025; % coefficient of friction for tires to ground (based on STOL take-off rule, see Nicolai p 257
-Clgrd = ClMax * 1.2 * Kdelta; % assume 20% of epand of full-span LE flap and a correction factor see Nicolai page 241
+mu=.025; % coefficient of friction for tires to ground (based on STOL take-off rule, see Nicolai p 257
+
 [rho, ~]=air_physics(0);% air density @ ground
 
 % Deduction of drage coefficient due to ground see Nicolai's page 259
@@ -75,7 +75,7 @@ hb = H/2/wing_span;
 sigma = 1 - 1.32 * hb /(1.05 + 7.4 * hb);
 
 Cdgrd = Cd0 + K*ClMax^2 - sigma*ClMax^2/pi/AR; % The reduction in induced drag of the aircraft in ground effect
-Vs = sqrt(2 * (W0 / S) / (rho(1) * ClMax)); % stall velocity at maximum lift coefficient with take-off weight
+Vs = sqrt(2 * (W0 / S) / (rho(1) * Clgrd)); % stall velocity at maximum lift coefficient with take-off weight
 sm=1.2; %Stall margin requrired see Nicolai p 257
 % disp([ 'stall speed:',num2str(Vs/airspeed)]);
 Vr = sm * Vs;
@@ -83,29 +83,32 @@ Vr = sm * Vs;
 %%% Take-off numerical simulation %%%
 if flag_catapult==0
     thr_catapult = 0;
+    stroke_limit = 0;
 else
-    % catapult baseline: C-13, stroke = 310 feet, 80,000 pound (18t) at 140.0 knots
+    % catapult baseline: C-13-1, stroke = 310 feet, 80,000 pound (18t) at 140.0 knots
     % thrust is calculated by energy consumed / stroke
-    thr_catapult = 0.5 * 80000 * 140 ^ 2 / 310 / g; % kinetic energy / stroke unit:lb
+    thr_catapult = 0.5 * 80000 * (140*1.68) ^ 2 / 310 / g; % kinetic energy / stroke unit:lb
     stroke_limit = 310;
     % C-7,  weaker and older verison
-    thr_catapult = 0.5 * 40000 * 148 ^ 2 / 253 / g; % kinetic energy / stroke unit:lb
-    stroke_limit = 253;
+%     thr_catapult = 0.5 * 40000 * (148/1.68) ^ 2 / 253 / g; % kinetic energy / stroke unit:lb
+%     stroke_limit = 253;
+    % EMAL
+%     thr_catapult = 0.5 * 100000 * (130/1.68) ^ 2 / 91 / g; % kinetic energy / stroke unit:lb
+%     stroke_limit = 91;
 end
 
 %initial velocity and time
 v=0;
 t=0;
 x=0;
-dt = 0.001; % timestamps [sec]
+dt = 0.02; % timestamps [sec]
 W = W_full;
-Thr = (Thr + thr_catapult);
 while v<Vr
     t = t+dt;
     if x < stroke_limit
-        dvdt = (g./W).*((Thr + thr_catapult).*cosd(tda)-0.5.*rho(1).*S.*Cdgrd.*v.^2-u.*(W-0.5.*rho(1).*S.*Clgrd.*v.^2- (Thr + thr_catapult).*sind(tda)));
+        dvdt = (g./W).*((Thr + thr_catapult).*cosd(tda)-0.5.*rho(1).*S.*Cdgrd.*v.^2-mu.*(W-0.5.*rho(1).*S.*Clgrd.*v.^2- (Thr + thr_catapult).*sind(tda)));
     else
-        dvdt = (g./W).*((Thr + 0).*cosd(tda)-0.5.*rho(1).*S.*Cdgrd.*v.^2-u.*(W-0.5.*rho(1).*S.*Clgrd.*v.^2- (Thr + 0).*sind(tda)));
+        dvdt = (g./W).*((Thr + 0).*cosd(tda)-0.5.*rho(1).*S.*Cdgrd.*v.^2-mu.*(W-0.5.*rho(1).*S.*Clgrd.*v.^2- (Thr + 0).*sind(tda)));
     end
     v = v + dvdt * dt;
     x = x + v * dt;
@@ -122,13 +125,13 @@ end
 % Mach number is calculated iteratively to match the speed
 Mach = 0.8; % inital mach number
 Mach_n_1 = 0;
-dt = 1;
+dt = 6;
 h = 0;
 W = W1;
 t = 0;
 Thr0 = Thr;
 [rho0, ~]=air_physics(0);
-
+x = 0;
 while (h < cruise_altitude && W > 0)
     try
         [rrho, airspeed]=air_physics(h);
@@ -148,32 +151,51 @@ while (h < cruise_altitude && W > 0)
     end
     Cd=Cd0+K*Cl.^2;
     singam=(Thrr/W)-(Cd./Cl);
+%     if singam>=1
+%        keyboard 
+%     end
+    singam = min(singam,1);
     dhdt=V.*singam'; % sink rate
+    dxdt=V.*sqrt(1-singam'.^2); % sink rate
     h = h + dhdt*dt; % climbing
+    x = x + dxdt*dt; %horizontal movement
     FuelSpentClimb = SFC.*Thr.*dt./3600;
     W = W - (FuelSpentClimb);
     t = t + dt;
 end
-
+horizontal_climb = x;
 W2 = W;
 if W2 <= W_empty
    return 
 end
 %% Section 3: approaching
-Mach = target_cruise_mach;
-[Cd0, S, a, alpha0, ClMax, K, Kdelta, H]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
+% Mach = target_cruise_mach;
 [tda, SFC_SL, SFC]=engine_spec(); % engine specification data
 [rho, airspeed]=air_physics(cruise_altitude);
-u = Mach * airspeed; % mach to velocity ft/sec
-max_LD = 1/(2*sqrt(Cd0*K)); % Nocolai page 76
-% service_range_approach = service_range;
-service_range_approach = service_range + (logistics.number_refueling - 1) * logistics.distance_refueling;
-W3 = W2 * exp(-SFC/3600 * service_range_approach/(u*max_LD)); % Breguet Range equations Nicolai p 78
+%[Cd0, S, a, alpha0, ClMax, K, Kdelta, H]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
+Mach = linspace(0.6,0.9,10);
+% because the cdo is nonlinear to mach number, thus we use vector
+% calculation to find best refueling airplane' cruise speed
+u = Mach .* airspeed; % mach to velocity ft/sec
+% max_LD = 1/(2*sqrt(Cd0*K)); % Nocolai page 76
+for iter = 1:3
+    Cl = W./(0.5.*rrho*S.*u.^2);
+    [Cd0, S, a, alpha0, ClMax, K, Clgrd, H]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
+    Cd = Cd0+K.*Cl.^2;
+    max_LD = Cl./Cd;
+    % service_range_approach = service_range;
+    service_range_approach = max(service_range - 0.9*horizontal_climb, 0) + (logistics.number_refueling - 1) * logistics.distance_refueling;
+    W3 = W2 * exp(-SFC/3600 * service_range_approach./(u.*max_LD)); % Breguet Range equations Nicolai p 78
+    W = (W3+W2)/2;
+end
+W3 = max(W3);
+% Mach = Mach(iter);
 
 if W3 <= W_empty
-   return 
+    return
 end
 
+%%
 %% Segment 4: refueling
 %A single flying boom can transfer fuel at approximately 6,000 lbs per
 %minute;
@@ -189,13 +211,25 @@ d_SFC = 6000*60;
 %% Segment 5 & 6: landing -> return
 W7= W_empty; % Weight after landed.
 W6 = W7 / 0.995; % Wetght before landed based on Hisotical data see Raymer page 21.
-W5 = W6/exp(-SFC/3600 * service_range/(u*max_LD)); % Breguet Range equations Nicolai p 78
-
+% use a range to find most fuel saving speed
+Mach = linspace(0.5,0.9,10);
+u = Mach .* airspeed; % mach to velocity ft/sec
+W = W6;
+service_range_return = max(service_range,horizontal_climb);
+for iter = 1:3
+    Cl = W./(0.5.*rrho*S.*u.^2);
+    [Cd0, S, a, alpha0, ClMax, K, Clgrd, H]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
+    Cd = Cd0+K.*Cl.^2;
+    max_LD = Cl./Cd;
+    W5 = W6./exp(-SFC./3600.*service_range_return./(u.*max_LD)); % Breguet Range equations Nicolai p 78
+    W = (W5+W6)/2;
+end
+W5 = min(W5);
 if W3 < W5
    %disp('impossible, please change your serivce range');
    return
 end
-capacity = max(W3-W5,0.01);
+capacity = max(W3-W5,0.001);
 fuel_consumed = W_full-W_empty-(W3-W5);
 if W3 < W5
    %disp('impossible, please change your serivce range');
@@ -255,7 +289,7 @@ x_pos = x(t2)/3280.84;
 % logistics = struct();
 % logistics.number_refueling = 2; % number of refueling for same refueling airplane
 % logistics.number_target = 2; % number of refueling  for same target airplane
-
+u = target_cruise_mach .* airspeed; % mach to velocity ft/sec
 dW = capacity / logistics.number_refueling; % amount of refuel to be refuel in one time
 
 Wtarget_0 = empty_weight_target + max_payload_target;
@@ -273,7 +307,6 @@ Wn = Wn/0.995; % Landing see Raymer page 21
 Wn = Wn ./ exp(- (Range_target) * SFC_target / 3600 / u / LD_ratio_target);
 Wn = Wn / 0.985;% historial date for climb see Raymer page 21;
 Wn = Wn / 0.970; % take-off weight see Raymer page 21;
-
 
 
 total_fuel_saved = (Wn - Wr) / logistics.number_target * logistics.number_refueling - capacity - fuel_consumed; % total fuel saved in lb

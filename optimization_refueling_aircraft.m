@@ -11,16 +11,15 @@ Config = {};
 SERVICE_RANGE = 500;
 MAX_take_off_length = 253;
 WING_SPAN = linspace(68,132,6);
-Thr_Weight_Ratio = linspace(0.2,0.45,6); % See Nicolai p469
+Thr_Weight_Ratio = linspace(0.2,0.45,8); % See Nicolai p469
+% Thr_Weight_Ratio = 0.45:0.03:0.65; % See Nicolai p469
 Sweep_Angle = linspace(0, 25, 4);
 AspectRatio = linspace(5.57, 10.1,6);
 MAX_TO_WEIGHT = linspace(40000, 175000,10);
 FLAG_catapult = [0,1];
-RANGES = 300:200:1100;
-
-
+RANGES = 300:200:900;
 No_cases = length(WING_SPAN)*length(Thr_Weight_Ratio)*length(AspectRatio)*length(Sweep_Angle)*length(MAX_TO_WEIGHT);
-for flag_catapult = [0,1]
+for flag_catapult = [1]
     for SERVICE_RANGE = RANGES
         MTFW = zeros(No_cases,1);
         Capacity = zeros(No_cases,1);
@@ -46,9 +45,10 @@ for flag_catapult = [0,1]
                             MTFW(count) = refueling_aircraft.weight_takeoff;
                             Capacity(count) = Weights(end-1) ; % capacity - fuel consumed
                             Fuel_Consumed(count) = Weights(end);
+%                             Weights(end)
                             Config(count,:) = [wing_span, thr_w_ratio, aspect_ratio, sweep_angle, mto_weight];
                             Takeoff_Distance(count) = take_off_distance;
-                            if Capacity(count) >=0 && max_fuel_saved >= 0
+                            if Capacity(count) >=0 &&  x_pos >= 0
                                 Validation(count) = 1;
                             else
                                 Validation(count) = 0;
@@ -59,8 +59,7 @@ for flag_catapult = [0,1]
                 end
             end
         end
-        str_e = sprintf('aircraft_sizinge/aircraft_range%d_catapult%d',SERVICE_RANGE,flag_catapult);
+        str_e = sprintf('aircraft_sizing/C13_aircraft_range%d_catapult%d',SERVICE_RANGE,flag_catapult);
         save(str_e,'MTFW','Capacity','Fuel_Consumed','Validation','Config','Takeoff_Distance');
-        
     end
 end
