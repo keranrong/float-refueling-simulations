@@ -1,0 +1,14 @@
+% This script is used for calculate fuel saved for benchmark aircraft
+% S-3 Viking
+x = [68, 0.35, 7.73, 15, 52539];
+designvector_aircraft(x)
+% C-130J
+x = [132.6, 0.19, 10.1, 0, 155000];
+designvector_aircraft(x)
+% Boeing 737-200
+x = [93, 0.324, 9.45, 25, 181200];
+designvector_aircraft(x)
+% KC - 135
+x = [93, 0.324, 9.45, 25, 181200];
+designvector_aircraft(x)
+

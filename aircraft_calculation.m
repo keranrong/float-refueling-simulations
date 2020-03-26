@@ -125,7 +125,7 @@ end
 % Mach number is calculated iteratively to match the speed
 Mach = 0.8; % inital mach number
 Mach_n_1 = 0;
-dt = 6;
+dt = 1;
 h = 0;
 W = W1;
 t = 0;
