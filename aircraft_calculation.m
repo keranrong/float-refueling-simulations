@@ -68,14 +68,18 @@ Mach = 0.2; % for take-off/landing Mach is set to be 0.2
 
 mu=.025; % coefficient of friction for tires to ground (based on STOL take-off rule, see Nicolai p 257
 
-[rho, ~]=air_physics(0);% air density @ ground
+[rho, airspeed]=air_physics(0);% air density @ ground
 
 % Deduction of drage coefficient due to ground see Nicolai's page 259
 hb = H/2/wing_span;
 sigma = 1 - 1.32 * hb /(1.05 + 7.4 * hb);
 
 Cdgrd = Cd0 + K*ClMax^2 - sigma*ClMax^2/pi/AR; % The reduction in induced drag of the aircraft in ground effect
-Vs = sqrt(2 * (W0 / S) / (rho(1) * Clgrd)); % stall velocity at maximum lift coefficient with take-off weight
+
+% Vs = sqrt(2 * (W0 / S) / (rho(1) * Clgrd)); % stall velocity at maximum lift coefficient with take-off weight
+
+Vs = sqrt(2 * (W0 / S) / (rho(1) * ClMax)); % stall velocity at maximum lift coefficient with take-off weight
+
 sm=1.2; %Stall margin requrired see Nicolai p 257
 % disp([ 'stall speed:',num2str(Vs/airspeed)]);
 Vr = sm * Vs;
@@ -90,11 +94,11 @@ else
     thr_catapult = 0.5 * 80000 * (140*1.68) ^ 2 / 310 / g; % kinetic energy / stroke unit:lb
     stroke_limit = 310;
     % C-7,  weaker and older verison
-%     thr_catapult = 0.5 * 40000 * (148/1.68) ^ 2 / 253 / g; % kinetic energy / stroke unit:lb
-%     stroke_limit = 253;
+    %     thr_catapult = 0.5 * 40000 * (148*1.68) ^ 2 / 253 / g; % kinetic energy / stroke unit:lb
+    %     stroke_limit = 253;
     % EMAL
-%     thr_catapult = 0.5 * 100000 * (130/1.68) ^ 2 / 91 / g; % kinetic energy / stroke unit:lb
-%     stroke_limit = 91;
+    %     thr_catapult = 0.5 * 100000 * (130*1.68) ^ 2 / 91 / g; % kinetic energy / stroke unit:lb
+    %     stroke_limit = 91;
 end
 
 %initial velocity and time
@@ -113,60 +117,51 @@ while v<Vr
     v = v + dvdt * dt;
     x = x + v * dt;
     FuelSpentTO = SFC_SL*Thr*dt*(1/3600);
-    W = W-(FuelSpentTO*g);
+    W = W-(FuelSpentTO);
 end
 
 take_off_distance = x;
 W1= W; % the weight after take-off
 if W1 <= W_empty
-   return 
+    return
 end
 %% segment 2: Aircraft Climb section
 % Mach number is calculated iteratively to match the speed
-Mach = 0.8; % inital mach number
-Mach_n_1 = 0;
-dt = 1;
-h = 0;
 W = W1;
-t = 0;
+climb_level = linspace(0, cruise_altitude, 30);
 Thr0 = Thr;
 [rho0, ~]=air_physics(0);
+Mach = linspace(0.2,0.8,30);
 x = 0;
-while (h < cruise_altitude && W > 0)
-    try
-        [rrho, airspeed]=air_physics(h);
-    catch
-        keyboard
-    end
+% climb_level = [0,18000];
+for ii = 1:length(climb_level)-1
+    [rrho, airspeed]=air_physics(climb_level(ii));
     Thrr = Thr0 / rho0 * rrho;
-    count = 1;
-    while(abs(Mach-Mach_n_1)>= 0.1 && count<10)
-        Mach = Mach_n_1;
-        [Cd0, S, ~, ~, ~, K, ~, ~]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
-        % [Me, Mf, Cd0, S, a, alpha0, ClMax, K, Cf, alphamax, Kdelta, ~]=sizing_aircraft(L,wing_span,AR,weight_takeoff,sweep_angle,Mach);
-        Cl=(-(Thrr/W)+sqrt((Thrr/W).^2+12*Cd0*K))/(2*K); % Cl for max rate of climb assuming thrust independent of airspeed
-        V = sqrt(W./(0.5.*rrho*S.*Cl));
-        Mach_n_1 = V / airspeed; % convert to Mach number
-        count = count + 1;
-    end
-    Cd=Cd0+K*Cl.^2;
-    singam=(Thrr/W)-(Cd./Cl);
-%     if singam>=1
-%        keyboard 
-%     end
-    singam = min(singam,1);
-    dhdt=V.*singam'; % sink rate
-    dxdt=V.*sqrt(1-singam'.^2); % sink rate
-    h = h + dhdt*dt; % climbing
-    x = x + dxdt*dt; %horizontal movement
+    [Cd0, S, ~, ~, ~, K, ~, ~]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
+    u = Mach.*airspeed;
+    Cl = W./(0.5.*rrho.*S.*u.^2);
+    c_rate = sqrt(W./(0.5.*rrho.*S)).*(Thrr./W.*Cl.^(-0.5)-(Cd0+K.*Cl.^2)./(Cl.^(3/2)));
+    [climb_rate1,iii] = max(c_rate);
+    u1 = u(iii);
+    [rrho, airspeed]=air_physics(climb_level(ii+1));
+    Thrr = Thr0 / rho0 * rrho;
+    [Cd0, S, ~, ~, ~, K, ~, ~]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
+    u = Mach.*airspeed;
+    Cl = W./(0.5.*rrho.*S.*u.^2);
+    c_rate = sqrt(W./(0.5.*rrho.*S)).*(Thrr./W.*Cl.^(-0.5)-(Cd0+K.*Cl.^2)./(Cl.^(3/2)));
+    [climb_rate2,iii] = max(c_rate);
+    u2 = u(iii);
+    h0_dot = (climb_level(ii+1)*climb_rate1 - climb_level(ii)*climb_rate2)/(climb_level(ii+1)-climb_level(ii));
+    H = (climb_level(ii)*climb_rate2 - climb_level(ii+1)*climb_rate1)/(climb_rate2-climb_rate1);
+    dt = H / h0_dot * log((H - climb_level(ii)) / (H - climb_level(ii+1)));
     FuelSpentClimb = SFC.*Thr.*dt./3600;
     W = W - (FuelSpentClimb);
-    t = t + dt;
+    x = x + (sqrt(u1^2 - climb_rate1^2) + sqrt(u2^2 - climb_rate2^2))/2*dt;
 end
 horizontal_climb = x;
 W2 = W;
 if W2 <= W_empty
-   return 
+    return
 end
 %% Section 3: approaching
 % Mach = target_cruise_mach;
@@ -226,14 +221,14 @@ for iter = 1:3
 end
 W5 = min(W5);
 if W3 < W5
-   %disp('impossible, please change your serivce range');
-   return
+    %disp('impossible, please change your serivce range');
+    return
 end
 capacity = max(W3-W5,0.001);
 fuel_consumed = W_full-W_empty-(W3-W5);
 if W3 < W5
-   %disp('impossible, please change your serivce range');
-   return
+    %disp('impossible, please change your serivce range');
+    return
 end
 
 %% Segment 7( show the optimzed position ): Logistics: fuel saved for target airplane

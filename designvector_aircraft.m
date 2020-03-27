@@ -1,4 +1,4 @@
-function [costobject, costobject2] = designvector_aircraft(iptipt)
+function [costobject, costobject2, take_off_distance1] = designvector_aircraft(iptipt)
 wing_span = iptipt(1);
 thr_w_ratio = iptipt(2);
 aspect_ratio = iptipt(3);
@@ -24,9 +24,16 @@ h3 = max(max(0, -x_pos1));
 h4 = max(max(0, -x_pos2));
 h5 = max(0, -Weights1(end-1));
 h6 = max(0, -Weights2(end-1));
+panelty = 1e10;
 
-panelty = 1e7;
+% Weights = [W0,W1,W2,W3,W3-dW,W5,W6,W7,capacity,fuel_consumed];
+% [W0,W1,W2,W3,W3-dW,W5,W6,W7,capacity,fuel_consumed] = Weights1;
 % costobject = Weights2(end-1)/1e3 - Weights2(end)/1e3 + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
-costobject = -max_fuel_saved2/1e3 + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
-costobject2 = -max_fuel_saved1/1e3 + panelty * (h1^2 + h3^2 + h5^2);
+% costobject = -max_fuel_saved2/1e3 + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
+% costobject2 = -max_fuel_saved1/1e3 + panelty * (h1^2 + h3^2 + h5^2);
+
+
+costobject = -(Weights2(end-1)-Weights2(end)) + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
+costobject2 = -(Weights1(end-1)-Weights1(end)) + panelty * (h1^2 + h3^2 + h5^2);
+
 end

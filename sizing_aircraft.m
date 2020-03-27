@@ -25,7 +25,7 @@ a = cos(sweep);
 a = 1 + ( pi * AR / a0 / a ).^2 .* (1 - Mach.^2 * a.^2);
 a = pi * AR ./ (1 + sqrt(a)); 
 % Thus Cl = a * (alpha - alpha0)
-ClMax = (alphamax- alpha0)*a;
+% ClMax = (alphamax- alpha0)*a;
 
 
 % Oswald span efficiency method see Raymer page 347

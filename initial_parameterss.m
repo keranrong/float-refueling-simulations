@@ -28,7 +28,7 @@ target_airplane.max_payload = 96560; % max payload [lb]
 
 %% Logistics strategy
 logistics = struct();
-logistics.number_refueling = 1; % number of refueling for same refueling airplane 
+logistics.number_refueling = 5; % number of refueling for same refueling airplane 
 logistics.number_target = 1; % number of refueling  for same target airplane 
 logistics.distance_refueling = 26400*1; %[km] the distance between two refueling for same refeuling airplane, 5 miles as the minimum safety distance
 % According to FAA regulations
