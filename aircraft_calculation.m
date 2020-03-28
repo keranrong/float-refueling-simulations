@@ -64,20 +64,24 @@ W0= W_full; % take - off weight
 %% segment 1: Aircraft take-off condition
 %%% initialization %%%
 Mach = 0.2; % for take-off/landing Mach is set to be 0.2
-[Cd0, S, ~, ~, ClMax, K, Clgrd, H]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
+[Cd0, S, ~, ~, ClMax, K, Clgrdmax, H, Keff, ~]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
 
 mu=.025; % coefficient of friction for tires to ground (based on STOL take-off rule, see Nicolai p 257
 
 [rho, airspeed]=air_physics(0);% air density @ ground
 
-% Deduction of drage coefficient due to ground see Nicolai's page 259
-hb = H/2/wing_span;
-sigma = 1 - 1.32 * hb /(1.05 + 7.4 * hb);
-
-Cdgrd = Cd0 + K*ClMax^2 - sigma*ClMax^2/pi/AR; % The reduction in induced drag of the aircraft in ground effect
-
+% % Deduction of drage coefficient due to ground see Nicolai's page 259
+% hb = H/2/wing_span;
+% sigma = 1 - 1.32 * hb /(1.05 + 7.4 * hb);
+% The increase of drag coefficient based on AOE3104 lecture notes:
+d_Cd0 = 3.16e-5 * W0/S*47.88 * (W0*0.453592)^(-0.215); % full flap 
+% find Clgrd that minimize the drag;
+Clgrd = linspace(0,Clgrdmax,15);
+Cdgrd = Cd0 + Keff .* Clgrd.^2 + d_Cd0 - mu .* Clgrd; % The reduction in induced drag of the aircraft in ground effect
+[~,iii] = min(Cdgrd);
+Clgrd = Clgrd(iii);
+Cdgrd = Cd0 + Keff .* Clgrd.^2 + d_Cd0;
 % Vs = sqrt(2 * (W0 / S) / (rho(1) * Clgrd)); % stall velocity at maximum lift coefficient with take-off weight
-
 Vs = sqrt(2 * (W0 / S) / (rho(1) * ClMax)); % stall velocity at maximum lift coefficient with take-off weight
 
 sm=1.2; %Stall margin requrired see Nicolai p 257
@@ -121,7 +125,7 @@ while v<Vr
 end
 
 take_off_distance = x;
-W1= W; % the weight after take-off
+W1= min(W, 0.97*W0); % the weight after take-off the calculation does not account for the warm-up, so we used 97% for calibrations
 if W1 <= W_empty
     return
 end
@@ -160,7 +164,7 @@ for ii = 1:length(climb_level)-1
 end
 horizontal_climb = x;
 W2 = W;
-if W2 <= W_empty
+if W2 <= W_empty || real(horizontal_climb)<=0
     return
 end
 %% Section 3: approaching

@@ -1,4 +1,4 @@
-function [Cd0, S, a, alpha0, ClMax, K, Clgrd, H]=sizing_aircraft(wing_span, AR, sweep, Mach)
+function [Cd0, S, a, alpha0, ClMax, K, Clgrd, H, Keff, d_Cd0]=sizing_aircraft(wing_span, AR, sweep, Mach)
 % AR: aspect ratio 10.1 for C-130, 7.73 for S-3 Viking, 6.96 for boeing 747
 % 9.45 for new boeing 737 
 % b: wing-span: 132.6 ft for C-130, 68ft for S-3A, 117 ft for boeing 737,
@@ -37,7 +37,6 @@ end
 K = 1 / pi / e / AR; % see Nicolai's page 50.
 
 % Kdelta = (1-0.08*cos(sweep)^2)*(cos(sweep))^(3/4); % correction factor for ground lifting see Nicolai page 241
-Clgrd = 0.253*AR+0.65; % based on the regression on page 229 (the aircraf with leading edge such as U2s is removed from the table) 
 % due to the lack of date on fusage drag, now we assumed the Cd0 is same as
 % Boeing 747-200
 Mach = min(max(Mach,0.198),0.9);
@@ -45,4 +44,12 @@ MACH = [0.198, 0.65, 0.9]; % approach, low cruise, high cruise
 Cd0 = [0.0751,0.0164,0.0305]; % approach, low cruise, high cruise
 Cd0 = interp1(MACH, Cd0, Mach, 'spline'); % verified
 
+% GROUND AFFECT
+Clgrd = 0.253*AR+0.65; % based on the regression on page Nicolai's 229 (the aircraf with leading edge such as U2s is removed from the table) 
+% ground K see Rayemer's page354
+h_b = H / 2 / wing_span;
+Keff = K * 33*h_b^(1.5) / (1 + 33*h_b^(1.5));
+kf = 0.14; % for full flap see Raymer's page 354; The drag coefficient of
+% Boeing 747-200 is already the drag at approach mach = 0,02
+d_Cd0 = kf^2 * (max(0, Clgrd-ClMax))^2 * cos(sweep);
 end

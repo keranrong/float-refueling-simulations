@@ -3,12 +3,27 @@
 % options = optimoptions('simulannealbnd','PlotFcns',...
 %           {@saplotbestx,@saplotbestf,@saplotx,@saplotf});
 options = optimoptions('simulannealbnd','MaxIterations',18000,'AnnealingFcn',{@annealingboltz});
+options = optimoptions('simulannealbnd','MaxIterations',18000);
+
 fun = @simulatedannealing_aircraft;
 x = [84.1082379045193,0.349743513370215,10.0955983473695,22.0952630375766,105126.778450296];
-lb = [65,    0.2,  5.5, 0, 40000];
-ub = [132,  0.35, 10.1, 25, 175000];
-x = simulannealbnd(fun,x,lb,ub,options)
+x = [68, 0.35, 7.73, 15, 52539];
 
+% x_final = x;
+for i = 1:10
+%     a = 65;
+%     b = 132;
+%     x(1) = (b-a).*rand(1,1) + a;
+    lb = [65,    0.2,  5.5, 0, 40000];
+    ub = [132,  0.35, 10.1, 25, 175000];
+    x = (ub - lb).*rand(1,5) + lb;
+    x = simulannealbnd(fun,x,lb,ub,options);
+    if simulatedannealing_aircraft(x) < simulatedannealing_aircraft(x_final)
+        x_final = x;
+    end
+end
+% [128.819012239123,0.350000000000000,7.89064734860678,21.9315015547280,122698.599174602]
+% x=[120.961610816211,0.350000000000000,10.57270323280882,23.5222812476999,137324.623889419];
 % x = [[88.9262691416019,0.448683168234183,10.0927980434682,7.07892535031432,104971.362075440]]; % final with 1 refueling 1 airplane
 % x = [[88.9262691416019,0.448683168234183,10.0927980434682,7.07892535031432,104971.362075440]]; % final with 2 refueling 2 airplane
 % x = [[88.9262691416019,0.448683168234183,10.0927980434682,7.07892535031432,104971.362075440]]; % final with 1 refueling 2 airplane
