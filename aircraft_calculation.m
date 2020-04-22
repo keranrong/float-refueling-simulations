@@ -2,7 +2,7 @@
 %% This file is used to calculate the refueling aircraft' performance and logisitics
 % Created by KRg/Gautam 30/05/2020,
 % modified to a function verison of the implementation
-function [max_fuel_saved, x_pos, Weights, take_off_distance] = aircraft_calculation(refueling_aircraft,target_airplane, logistics, flag_catapult)
+function [max_fuel_saved, x_pos, Weights, take_off_distance, landing_distance] = aircraft_calculation(refueling_aircraft,target_airplane, logistics, flag_catapult)
 %% Constant
 g = 32.174; % gravity
 % flag_catapult = 1; % On/Off Catapult
@@ -11,6 +11,7 @@ max_fuel_saved = -1;
 x_pos = -1;
 Weights = zeros(1,10);
 take_off_distance = -1;
+landing_distance = -1;
 %% Initial sizing of aircraft
 %{
 wing_span = 132; % wing-span[ft] of refueling aircraft
@@ -76,7 +77,7 @@ mu=.025; % coefficient of friction for tires to ground (based on STOL take-off r
 % The increase of drag coefficient based on AOE3104 lecture notes:
 d_Cd0 = 3.16e-5 * W0/S*47.88 * (W0*0.453592)^(-0.215); % full flap 
 % find Clgrd that minimize the drag;
-Clgrd = linspace(0,Clgrdmax,15);
+Clgrd = linspace(0,Clgrdmax,30);
 Cdgrd = Cd0 + Keff .* Clgrd.^2 + d_Cd0 - mu .* Clgrd; % The reduction in induced drag of the aircraft in ground effect
 [~,iii] = min(Cdgrd);
 Clgrd = Clgrd(iii);
@@ -132,7 +133,7 @@ end
 %% segment 2: Aircraft Climb section
 % Mach number is calculated iteratively to match the speed
 W = W1;
-climb_level = linspace(0, cruise_altitude, 30);
+climb_level = linspace(0, cruise_altitude, 50);
 Thr0 = Thr;
 [rho0, ~]=air_physics(0);
 Mach = linspace(0.2,0.8,30);
@@ -235,6 +236,50 @@ if W3 < W5
     return
 end
 
+%% Landing distance
+% Arresting gear;
+Mach = 0.2; % for take-off/landing Mach is set to be 0.2
+[Cd0, S, ~, ~, ClMax, K, Clgrdmax, H, Keff, ~]=sizing_aircraft(wing_span, AR, sweep_angle, Mach); % aerodynamic coefficient
+
+W = W_empty;
+d_Cd0 = 3.16e-5 * W/S*47.88 * (W*0.453592)^(-0.215); % full flap 
+d_Cdmisc = 1.4; % drag due to miscellaneuous items such as drag chute and high energy absoption brakes
+d_Cspoiler = 0.007; % drag due to spoiler
+d_Cd0 = d_Cd0 + d_Cdmisc + d_Cspoiler;
+% find Clgrd that minimize the drag;
+Clgrd = linspace(0,Clgrdmax,50);
+Cdgrd = Cd0 + Keff .* Clgrd.^2 + d_Cd0 - mu .* Clgrd; % The reduction in induced drag of the aircraft in ground effect
+[~,iii] = max(Cdgrd);
+Clgrd = Clgrd(iii);
+Cdgrd = Cd0 + Keff .* Clgrd.^2 + d_Cd0;
+
+
+%%% Take-off numerical simulation %%%
+if flag_catapult==0
+    thr_arrest = 0;
+    stroke_limit = 0;
+else
+    % Mark 7 Mod3 arresting gear
+    stroke_limit = 344;
+    thr_arrest = -0.5 * 50000 * (130*1.68) ^ 2 / stroke_limit / g; % kinetic energy / stroke unit:lb
+end
+
+[rho, airspeed]=air_physics(0);% air density @ ground
+x = 0;
+v = Vr;
+t = 0;
+dt = 0.01;
+while v>0
+    t = t+dt;
+    if x < stroke_limit
+        dvdt = (g./W).*((thr_arrest).*cosd(tda)-0.5.*rho(1).*S.*Cdgrd.*v.^2-mu.*(W-0.5.*rho(1).*S.*Clgrd.*v.^2- (thr_arrest).*sind(tda)));
+    else
+        dvdt = (g./W).*((0).*cosd(tda)-0.5.*rho(1).*S.*Cdgrd.*v.^2-mu.*(W-0.5.*rho(1).*S.*Clgrd.*v.^2- (Thr + 0).*sind(tda)));
+    end
+    v = v + dvdt * dt;
+    x = x + v * dt;
+end
+landing_distance = x;
 %% Segment 7( show the optimzed position ): Logistics: fuel saved for target airplane
 % In this section, we will calculate how much fuels we saved for
 % severviability of refueling mission
@@ -313,7 +358,7 @@ total_fuel_saved = (Wn - Wr) / logistics.number_target * logistics.number_refuel
 max_fuel_saved = total_fuel_saved;
 
 
-x_pos = (Range_target - rr.*cumsum(ones(logistics.number_target,1))) / 3280.84;
+x_pos = (Range_target - rr .* cumsum(ones(logistics.number_target,1))) / 3280.84;
 Weights = [W0,W1,W2,W3,W3-dW,W5,W6,W7,capacity,fuel_consumed];
 
 end

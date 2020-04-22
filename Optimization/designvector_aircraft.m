@@ -1,4 +1,4 @@
-function [costobject, costobject2, take_off_distance1] = designvector_aircraft(iptipt)
+function [costobject, costobject2, take_off_distance1, climb_weight_ratio, max_fuel_saved1, max_fuel_saved2] = designvector_aircraft(iptipt)
 wing_span = iptipt(1);
 thr_w_ratio = iptipt(2);
 aspect_ratio = iptipt(3);
@@ -6,14 +6,18 @@ sweep_angle = iptipt(4);
 mto_weight = iptipt(5);
 
 initial_parameterss;
+logistics.number_refueling = 10; % number of refueling for same refueling airplane 
+
 refueling_aircraft.wing_span = wing_span; % wing-span [ft] of refueling aircraft
 refueling_aircraft.weight_takeoff = mto_weight; % take-off weight of refueling aircraft [lb]
 refueling_aircraft.AR = aspect_ratio; % aspect ratio of refueling aircraft
 refueling_aircraft.sweep_angle = sweep_angle;  % Sweep angle [deg]
 refueling_aircraft.thrust_weight_ratio = thr_w_ratio; % Thrust to weight ratio[-]
 flag_catapult = 0; % take-off from island
+refueling_aircraft.service_range = 1000;% service range km
 [max_fuel_saved1, x_pos1, Weights1, take_off_distance1] = aircraft_calculation(refueling_aircraft, target_airplane, logistics, flag_catapult);
 flag_catapult = 1; % take-off from ships
+refueling_aircraft.service_range = 500;% service range km
 [max_fuel_saved2, x_pos2, Weights2, take_off_distance2] = aircraft_calculation(refueling_aircraft, target_airplane, logistics, flag_catapult);
 
 initial_constraints;
@@ -32,7 +36,7 @@ panelty = 1e10;
 % costobject = -max_fuel_saved2/1e3 + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
 % costobject2 = -max_fuel_saved1/1e3 + panelty * (h1^2 + h3^2 + h5^2);
 
-
+climb_weight_ratio = Weights1(3)/Weights1(2);
 costobject = -(Weights2(end-1)-Weights2(end)) + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
 costobject2 = -(Weights1(end-1)-Weights1(end)) + panelty * (h1^2 + h3^2 + h5^2);
 

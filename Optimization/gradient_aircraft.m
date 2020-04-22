@@ -1,4 +1,4 @@
-function [costobject, take_off_distance2, costobject2] = simulatedannealing_aircraft(iptipt)
+function [costobject] = gradient_aircraft(iptipt)
 wing_span = iptipt(1);
 thr_w_ratio = iptipt(2);
 aspect_ratio = iptipt(3);
@@ -13,7 +13,7 @@ refueling_aircraft.AR = aspect_ratio; % aspect ratio of refueling aircraft
 refueling_aircraft.sweep_angle = sweep_angle;  % Sweep angle [deg]
 refueling_aircraft.thrust_weight_ratio = thr_w_ratio; % Thrust to weight ratio[-]
 flag_catapult = 0; % take-off from island
-refueling_aircraft.service_range = 1000;% service range km
+refueling_aircraft.service_range = 900;% service range km
 [max_fuel_saved1, x_pos1, Weights1, take_off_distance1] = aircraft_calculation(refueling_aircraft, target_airplane, logistics, flag_catapult);
 flag_catapult = 1; % take-off from ships
 refueling_aircraft.service_range = 500;% service range km
@@ -27,11 +27,11 @@ h3 = max(max(0, -x_pos1));
 h4 = max(max(0, -x_pos2));
 h5 = max(0, -max_fuel_saved1);
 h6 = max(0, -max_fuel_saved2);
-
+h7 = max(0,max(-(iptipt-lb)));
+h8 = max(0, max(iptipt-ub));
 panelty = 1e10;
 % costobject = Weights2(end-1)/1e3 - Weights2(end)/1e3 + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
 % costobject = -max_fuel_saved2/1e3 + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
-costobject = - (Weights1(end-1) - Weights1(end)) + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
-costobject2 = - (Weights2(end-1) - Weights2(end)) + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
+costobject = - (Weights2(end-1) - Weights2(end)) + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2 + h7^2 + h8^2);
 
 end

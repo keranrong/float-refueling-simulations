@@ -12,7 +12,7 @@ target_airplane = struct();
 target_airplane.target_cruise_mach = 0.8; % 533 mph
 target_airplane.cruise_altitude = 35000; % ft cruise altitude for operations
 target_airplane.SFC_target = 0.6; % Specific fuel consumption ratio
-target_airplane.Range_target = 850 * 14.3; % Range of flights [m-ft]
+target_airplane.Range_target = 850 * 13.5; % Range of flights [m-ft]
 target_airplane.LD_ratio_target = 	16.1; % Rodrigo Martínez-Val; et al. (January 2005). "Historical evolution of air transport productivity and efficiency". 43rd AIAA Aerospace Sciences Meeting and Exhibit. doi:10.2514/6.2005-121
 % Take_off_weight = 412000; % take-off weight [lb]
 target_airplane.empty_weight = 198440; % empty weight [lb]
@@ -33,3 +33,4 @@ logistics.number_target = 1; % number of refueling  for same target airplane
 logistics.distance_refueling = 26400*1; %[km] the distance between two refueling for same refeuling airplane, 5 miles as the minimum safety distance
 % According to FAA regulations
 flag_catapult = 1;
+% save('parameters.mat','flag_catapult', 'logistics', 'refueling_aircraft', 'target_airplane');

@@ -16,7 +16,7 @@ Mach = 0.8;
 %}
 
 H = 22; % Default height of the aircraft
-S  = wing_span^2 /AR; % project wing area S
+S  = wing_span^2 / AR; % project wing area S
 
 [ClMax, Clo, Cd0, Cdmin,maxclcd, K, alpha0, alphamax, alpha_Cdmin, a0, Cmo, upper_alpha, lower_alpha] = airfoil_bacXXX(); % bacxxx at Re=1e6;
 
@@ -25,12 +25,12 @@ a = cos(sweep);
 a = 1 + ( pi * AR / a0 / a ).^2 .* (1 - Mach.^2 * a.^2);
 a = pi * AR ./ (1 + sqrt(a)); 
 % Thus Cl = a * (alpha - alpha0)
-% ClMax = (alphamax- alpha0)*a;
+ClMax = (alphamax- alpha0)*a;
 
 
 % Oswald span efficiency method see Raymer page 347
 if sweep >= 30/180*pi
-    e = 4.61 * (1 - 0.045*AR^0.68) * (cos(sweep))^0.15 -31;
+    e = 4.61 * (1 - 0.045*AR^0.68) * (cos(sweep*1.03))^0.15 -31;
 else
     e = 1.78 * (1 - 0.045*AR^0.68) - 0.64;
 end
@@ -51,5 +51,5 @@ h_b = H / 2 / wing_span;
 Keff = K * 33*h_b^(1.5) / (1 + 33*h_b^(1.5));
 kf = 0.14; % for full flap see Raymer's page 354; The drag coefficient of
 % Boeing 747-200 is already the drag at approach mach = 0,02
-d_Cd0 = kf^2 * (max(0, Clgrd-ClMax))^2 * cos(sweep);
+d_Cd0 = kf^2 * (max(0, Clgrd-ClMax)).^2 .* cos(sweep);
 end
