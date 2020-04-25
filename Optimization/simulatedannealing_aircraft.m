@@ -1,4 +1,4 @@
-function [costobject, take_off_distance2, costobject2] = simulatedannealing_aircraft(iptipt)
+function [costobject, take_off_distance2, costobject2, fuel_consumption] = simulatedannealing_aircraft(iptipt)
 wing_span = iptipt(1);
 thr_w_ratio = iptipt(2);
 aspect_ratio = iptipt(3);
@@ -33,5 +33,5 @@ panelty = 1e10;
 % costobject = -max_fuel_saved2/1e3 + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
 costobject = - (Weights1(end-1) - Weights1(end)) + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
 costobject2 = - (Weights2(end-1) - Weights2(end)) + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
-
+fuel_consumption = Weights1(end);
 end

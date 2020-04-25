@@ -13,10 +13,12 @@ III = 5;
 xx(:,III)=xx(:,III) - 1000*0;
 result = zeros(size(xx,1),2);
 to_distance = zeros(size(xx,1),1);
+fuel = zeros(size(xx,1),1);
 for ii = 1:size(xx,1)
-[costobject_island, take_off_distance2, costobject_ship] = simulatedannealing_aircraft(xx(ii,:));
+[costobject_island, take_off_distance2, costobject_ship, fuel_consumption] = simulatedannealing_aircraft(xx(ii,:));
 result(ii,:)=[-costobject_island,-costobject_ship];
 to_distance(ii) = take_off_distance2/3.28084;
+fuel(ii) = fuel_consumption;
 end
 % to_distance = to_distance';
 res= [result,to_distance];
