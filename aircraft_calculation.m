@@ -264,7 +264,7 @@ else
     thr_arrest = -0.5 * 50000 * (130*1.68) ^ 2 / stroke_limit / g; % kinetic energy / stroke unit:lb
 end
 
-[rho, airspeed]=air_physics(0);% air density @ ground
+[rho, airspeed]=air_physics(35000);% air density @ ground
 x = 0;
 v = Vr;
 t = 0;
@@ -333,6 +333,7 @@ x_pos = x(t2)/3280.84;
 % logistics = struct();
 % logistics.number_refueling = 2; % number of refueling for same refueling airplane
 % logistics.number_target = 2; % number of refueling  for same target airplane
+[rho, airspeed]=air_physics(0);% air density @ ground
 u = target_cruise_mach .* airspeed; % mach to velocity ft/sec
 dW = capacity / logistics.number_refueling; % amount of refuel to be refuel in one time
 

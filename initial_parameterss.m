@@ -34,3 +34,53 @@ logistics.distance_refueling = 26400*1; %[km] the distance between two refueling
 % According to FAA regulations
 flag_catapult = 1;
 % save('parameters.mat','flag_catapult', 'logistics', 'refueling_aircraft', 'target_airplane');
+
+%% Airbus A350
+target_airplane.target_cruise_mach = 903/ 1076.59580000000; % 533 mph
+target_airplane.SFC_target = 0.545; % Specific fuel consumption ratio
+target_airplane.LD_ratio_target = 	21; % Rodrigo Martínez-Val; et al. (January 2005). "Historical evolution of air transport productivity and efficiency". 43rd AIAA Aerospace Sciences Meeting and Exhibit. doi:10.2514/6.2005-121
+target_airplane.empty_weight = 314000; % operating empty weight [lb]
+target_airplane.max_payload = 243662 ; % max payload [lb]
+
+%% Boeing 777
+target_airplane.target_cruise_mach = 892/ 1076.59580000000; % 533 mph
+target_airplane.SFC_target = 0.545; % Specific fuel consumption ratio
+target_airplane.LD_ratio_target = 	21; % Rodrigo Martínez-Val; et al. (January 2005). "Historical evolution of air transport productivity and efficiency". 43rd AIAA Aerospace Sciences Meeting and Exhibit. doi:10.2514/6.2005-121
+target_airplane.empty_weight = 320000; % operating empty weight [lb]
+target_airplane.max_payload = 766000- target_airplane.empty_weight; % max payload [lb]
+
+% Singapore Airlines SQ 21 -> A350-900
+target_airplane.Range_target = 15344; % Range of flights [km]
+target_airplane.target_cruise_mach = 903/ 1076.59580000000; % 533 mph
+target_airplane.SFC_target = 0.545; % Specific fuel consumption ratio
+target_airplane.LD_ratio_target = 	16; % Rodrigo Martínez-Val; et al. (January 2005). "Historical evolution of air transport productivity and efficiency". 43rd AIAA Aerospace Sciences Meeting and Exhibit. doi:10.2514/6.2005-121
+target_airplane.empty_weight = 314000; % operating empty weight [lb]
+target_airplane.max_payload = 243662 ; % max payload [lb]
+% % Singapore Airlines SQ 37, SQ 35 -> A350-900
+% target_airplane.Range_target = 14114; % Range of flights [km]
+% target_airplane.target_cruise_mach = 903/ 1076.59580000000; % 533 mph
+% target_airplane.SFC_target = 0.545; % Specific fuel consumption ratio
+% target_airplane.LD_ratio_target = 	21; % Rodrigo Martínez-Val; et al. (January 2005). "Historical evolution of air transport productivity and efficiency". 43rd AIAA Aerospace Sciences Meeting and Exhibit. doi:10.2514/6.2005-121
+% target_airplane.empty_weight = 314000; % operating empty weight [lb]
+% target_airplane.max_payload = 243662 ; % max payload [lb]
+% % Delta Air Lines DL 201 -> Boeing 777
+% target_airplane.Range_target = 13581; % Range of flights [km]
+% target_airplane.target_cruise_mach = 892/ 1076.59580000000; % 533 mph
+% target_airplane.SFC_target = 0.545; % Specific fuel consumption ratio
+% target_airplane.LD_ratio_target = 	21; % Rodrigo Martínez-Val; et al. (January 2005). "Historical evolution of air transport productivity and efficiency". 43rd AIAA Aerospace Sciences Meeting and Exhibit. doi:10.2514/6.2005-121
+% target_airplane.empty_weight = 320000; % operating empty weight [lb]
+% target_airplane.max_payload = 766000- target_airplane.empty_weight; % max payload [lb]
+% % Philippine Airlines PR 119 -> Boeing 777
+% target_airplane.Range_target = 13230; % Range of flights [km]
+% target_airplane.target_cruise_mach = 892/ 1076.59580000000; % 533 mph
+% target_airplane.SFC_target = 0.545; % Specific fuel consumption ratio
+% target_airplane.LD_ratio_target = 	21; % Rodrigo Martínez-Val; et al. (January 2005). "Historical evolution of air transport productivity and efficiency". 43rd AIAA Aerospace Sciences Meeting and Exhibit. doi:10.2514/6.2005-121
+% target_airplane.empty_weight = 320000; % operating empty weight [lb]
+% target_airplane.max_payload = 766000- target_airplane.empty_weight; % max payload [lb]
+% % American Airlines AA 125 -> Boeing 777-300ER
+% target_airplane.Range_target = 13072; % Range of flights [km]
+% target_airplane.target_cruise_mach = 892/ 1076.59580000000; % 533 mph
+% target_airplane.SFC_target = 0.545; % Specific fuel consumption ratio
+% target_airplane.LD_ratio_target = 	21; % Rodrigo Martínez-Val; et al. (January 2005). "Historical evolution of air transport productivity and efficiency". 43rd AIAA Aerospace Sciences Meeting and Exhibit. doi:10.2514/6.2005-121
+% target_airplane.empty_weight = 320000; % operating empty weight [lb]
+% target_airplane.max_payload = 766000- target_airplane.empty_weight; % max payload [lb]

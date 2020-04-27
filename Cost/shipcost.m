@@ -20,12 +20,13 @@ dwt_ton = geo_ton*scale_factor;
 b1 = regression_ship_cost();
 cost_price = b1(1)+dwt_ton*b1(2);
 if shipnumber == 1
-    modification_cost = 1.2;
+    modification_cost = 1.3;
 else
-    modification_cost = 2*1.2+0.6;
+    modification_cost = 2*1.3+0.6;
 end
-airport = 16e6*1.79; % based on  Scott McClure FPSO/FSO converison versus new build
+airport = 26e6 * 1.79; % based on  Scott McClure FPSO/FSO converison versus new build
 
-cost = modification_cost * cost_price(ship_id) + airport;
+cost = modification_cost * cost_price+ airport;
+cost = cost(ship_id);
 operation_cost = 982196*1.06; % https://www.researchgate.net/publication/298736632_LONG-TERM_FSOFPSO_CHARTER_RATE_ESTIMATION
 end

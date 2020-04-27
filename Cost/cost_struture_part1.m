@@ -5,13 +5,13 @@ aircrafts = [135	0.35	7.59782	0	124379.187
     135	0.35	6.01241	0.00652	158304.0799];
 
 
-x_refueling = [2,1];
-x_ship = [1,1];
+x_refueling = [3,2];
+x_ship = [1,2];
 x_aircraft = aircrafts(x_ship(1),:);
-number_aircraft = 3;
+number_aircraft = 2;
 tax_rate = 0.35;
 discount_factor = 15 * 0.01;
-margin_factor = 0.85;
+margin_factor = 1;
 %% NPV calculation
 life_cycle = 20;
 [ship_cost,ship_operation_cost] = shipcost(x_ship); % the capital cost of ship
@@ -37,3 +37,6 @@ npv = -captial_cost;
 for i = 1:life_cycle
     npv = npv + FCF(i)/((1+discount_factor)^i);
 end
+
+
+final_npv = NPV_calculation(x_refueling,x_ship)
