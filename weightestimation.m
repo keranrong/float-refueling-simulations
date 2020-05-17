@@ -12,6 +12,6 @@ T = [-0.0656, 0.8267];
 empty weight fraction = -0.0656 * log10(take-off weight) + 0.8267
 %}
 fraction_empty = -0.0656 * log10(W_ot) + 0.8267;
-W_empty = fraction_empty * W_ot;
+W_empty = fraction_empty * W_ot ; %-10% for UAV
 W_full =  W_ot;
 end

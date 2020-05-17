@@ -37,5 +37,19 @@ figure;
 hold on
 plot(available_cl, available_cd,'*');
 plot(temp_cl,temp_cd);
+
+figure;
+plot(d_alpha,d_cl);
+xlabel('Angle of Attack \alpha[deg]');
+ylabel('Lift coefficient C_l[-]');
+grid on
+title('Angle of attack versus Lift coeff for Bac XXX');
+
+figure;
+plot(d_cd,d_cl);
+xlabel('Angle of Attack [deg]');
+ylabel('Lift coefficient C_l [-]');
+grid on
+title('Angle of attack versus Lift coeff for Bac XXX');
 %}
 end

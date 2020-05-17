@@ -44,6 +44,14 @@ MACH = [0.198, 0.65, 0.9]; % approach, low cruise, high cruise
 Cd0 = [0.0751,0.0164,0.0305]; % approach, low cruise, high cruise
 Cd0 = interp1(MACH, Cd0, Mach, 'spline'); % verified
 
+% Mach = linspace(0.198, 0.9,200);
+% Cd0 = interp1(MACH, Cd0, Mach, 'spline'); % verified
+% figure;
+% plot(mach,Cd0);
+% grid on
+% xlabel('Mach number[-]');
+% ylabel('C_{d0}');
+
 % GROUND AFFECT
 Clgrd = 0.253*AR+0.65; % based on the regression on page Nicolai's 229 (the aircraf with leading edge such as U2s is removed from the table) 
 % ground K see Rayemer's page354

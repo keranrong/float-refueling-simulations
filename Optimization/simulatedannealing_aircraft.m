@@ -33,5 +33,7 @@ panelty = 1e10;
 % costobject = -max_fuel_saved2/1e3 + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
 costobject = - (Weights1(end-1) - Weights1(end)) + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
 costobject2 = - (Weights2(end-1) - Weights2(end)) + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
-fuel_consumption = Weights1(end);
+fuel_consumption = Weights2(end);
+% costobject = - Weights2(end-1)/Weights2(end) + panelty * (h1^2 + h2^2 + h3^2 + h4^2 + h5^2 + h6^2);
+
 end

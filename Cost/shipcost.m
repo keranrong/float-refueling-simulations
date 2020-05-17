@@ -9,7 +9,8 @@ ship_sizes = [205	29	16
     245	34	20
     285	45	23
     330	55	28
-    415	63	35];
+    415	63	35
+    0 0 0];
 
 geo_ton = ship_sizes(:,1).*ship_sizes(:,2).*ship_sizes(:,3)*density_seawater;
 % dwt afra_max is around 80,000 ton, thus we have scale factor from geo
@@ -29,4 +30,10 @@ airport = 26e6 * 1.79; % based on  Scott McClure FPSO/FSO converison versus new 
 cost = modification_cost * cost_price+ airport;
 cost = cost(ship_id);
 operation_cost = 982196*1.06; % https://www.researchgate.net/publication/298736632_LONG-TERM_FSOFPSO_CHARTER_RATE_ESTIMATION
+
+if ship_id == 6
+    cost = 0;
+    operation_cost = 0;
+end
+
 end

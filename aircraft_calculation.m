@@ -3,6 +3,7 @@
 % Created by KRg/Gautam 30/05/2020,
 % modified to a function verison of the implementation
 function [max_fuel_saved, x_pos, Weights, take_off_distance, landing_distance] = aircraft_calculation(refueling_aircraft,target_airplane, logistics, flag_catapult)
+% tic
 %% Constant
 g = 32.174; % gravity
 % flag_catapult = 1; % On/Off Catapult
@@ -12,6 +13,7 @@ x_pos = -1;
 Weights = zeros(1,10);
 take_off_distance = -1;
 landing_distance = -1;
+% toc
 %% Initial sizing of aircraft
 %{
 wing_span = 132; % wing-span[ft] of refueling aircraft
@@ -29,7 +31,7 @@ AR = refueling_aircraft.AR; % aspect ratio of refueling aircraft
 sweep_angle = refueling_aircraft.sweep_angle/180*pi; % Sweep angle of S-3 Viking
 thrust_weight_ratio = refueling_aircraft.thrust_weight_ratio; % Thrust to weight ratio
 service_range = refueling_aircraft.service_range * 3280.84;% service range km to ft
-
+% toc
 %% Parameter of target aircraft (baseline: Boeing 767)
 %{
 target_cruise_mach = 0.8; % 533 mph
@@ -50,7 +52,7 @@ LD_ratio_target = target_airplane.LD_ratio_target; % Rodrigo Martínez-Val; et al
 empty_weight_target = target_airplane.empty_weight; % empty weight [lb]
 max_payload_target = target_airplane.max_payload; % max payload [lb]
 
-
+% toc
 %% Initialization
 % We adopted airfoil bac XXX (used in boeing 747) for mean wing section (parameter)
 % and Turbofan engine LEAP-1C used in COMAC C919 (released in 2021)
@@ -61,7 +63,7 @@ max_payload_target = target_airplane.max_payload; % max payload [lb]
 %control thrust to weight ratio
 Thr = thrust_weight_ratio * W_full;
 W0= W_full; % take - off weight
-
+% toc
 %% segment 1: Aircraft take-off condition
 %%% initialization %%%
 Mach = 0.2; % for take-off/landing Mach is set to be 0.2
@@ -88,7 +90,7 @@ Vs = sqrt(2 * (W0 / S) / (rho(1) * ClMax)); % stall velocity at maximum lift coe
 sm=1.2; %Stall margin requrired see Nicolai p 257
 % disp([ 'stall speed:',num2str(Vs/airspeed)]);
 Vr = sm * Vs;
-
+% toc
 %%% Take-off numerical simulation %%%
 if flag_catapult==0
     thr_catapult = 0;
@@ -107,10 +109,11 @@ else
 end
 
 %initial velocity and time
+% tic
 v=0;
 t=0;
 x=0;
-dt = 0.02; % timestamps [sec]
+dt = 0.1; % timestamps [sec]
 W = W_full;
 while v<Vr
     t = t+dt;
@@ -124,7 +127,6 @@ while v<Vr
     FuelSpentTO = SFC_SL*Thr*dt*(1/3600);
     W = W-(FuelSpentTO);
 end
-
 take_off_distance = x;
 W1= min(W, 0.97*W0); % the weight after take-off the calculation does not account for the warm-up, so we used 97% for calibrations
 if W1 <= W_empty
@@ -133,7 +135,7 @@ end
 %% segment 2: Aircraft Climb section
 % Mach number is calculated iteratively to match the speed
 W = W1;
-climb_level = linspace(0, cruise_altitude, 50);
+climb_level = linspace(0, cruise_altitude, 30);
 Thr0 = Thr;
 [rho0, ~]=air_physics(0);
 Mach = linspace(0.2,0.8,30);
@@ -164,6 +166,7 @@ for ii = 1:length(climb_level)-1
     x = x + (sqrt(u1^2 - climb_rate1^2) + sqrt(u2^2 - climb_rate2^2))/2*dt;
 end
 horizontal_climb = x;
+
 W2 = W;
 if W2 <= W_empty || real(horizontal_climb)<=0
     return
@@ -190,7 +193,7 @@ for iter = 1:3
 end
 W3 = max(W3);
 % Mach = Mach(iter);
-
+% toc
 if W3 <= W_empty
     return
 end
@@ -235,7 +238,7 @@ if W3 < W5
     %disp('impossible, please change your serivce range');
     return
 end
-
+% toc
 %% Landing distance
 % Arresting gear;
 Mach = 0.2; % for take-off/landing Mach is set to be 0.2
@@ -252,7 +255,7 @@ Cdgrd = Cd0 + Keff .* Clgrd.^2 + d_Cd0 - mu .* Clgrd; % The reduction in induced
 [~,iii] = max(Cdgrd);
 Clgrd = Clgrd(iii);
 Cdgrd = Cd0 + Keff .* Clgrd.^2 + d_Cd0;
-
+% toc
 
 %%% Take-off numerical simulation %%%
 if flag_catapult==0
@@ -268,7 +271,7 @@ end
 x = 0;
 v = Vr;
 t = 0;
-dt = 0.01;
+dt = 0.1;
 while v>0
     t = t+dt;
     if x < stroke_limit
@@ -280,6 +283,7 @@ while v>0
     x = x + v * dt;
 end
 landing_distance = x;
+% toc
 %% Segment 7( show the optimzed position ): Logistics: fuel saved for target airplane
 % In this section, we will calculate how much fuels we saved for
 % severviability of refueling mission

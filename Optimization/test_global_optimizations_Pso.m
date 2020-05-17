@@ -6,7 +6,7 @@ fun = @simulatedannealing_aircraft;
 shipLL = [205,245,285,330,415,9000];
 initial_constraints;
 % x_optimal = zeros(5,5);
-for j = 6:length(shipLL) % mot_len = shipLL
+for j = 1:length(shipLL) % mot_len = shipLL
     shipLL(j)
     Length_Mothership = shipLL(j)*3.28084; % Length of ship [m->ft] % 1.2*9000;%
     save('constraints.mat','Length_Mothership');
